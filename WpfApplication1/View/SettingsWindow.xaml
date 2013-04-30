@@ -1,0 +1,27 @@
+﻿<Window x:Class="FamilyCollector.View.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        Title="Settings" Height="275" Width="450" ResizeMode="NoResize">
+    <Grid>
+        <GroupBox Header="Path" Margin="10,10,10,120">
+            <Grid HorizontalAlignment="Left" Height="95" VerticalAlignment="Top" Width="410">
+                <Label Content="Target Folder" HorizontalAlignment="Left" Margin="10,13,0,0" VerticalAlignment="Top"/>
+                <Label Content="Root Folder" HorizontalAlignment="Left" Margin="19,54,0,0" VerticalAlignment="Top" Width="72"/>
+                <TextBox x:Name="txtTarget" Height="23" Margin="96,15,49,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                <TextBox x:Name="txtRoot" Height="23" Margin="96,56,49,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
+                <Button x:Name="btnTgtBrowse" Content="..." Margin="0,15,21,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="23" Click="btnTgtBrowse_Click"/>
+                <Button x:Name="btnSrcBrowse" Content="..." Margin="0,56,21,0" Height="22" VerticalAlignment="Top" HorizontalAlignment="Right" Width="23" Click="btnSrcBrowse_Click"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Limits" Margin="10,134,92,12">
+            <Grid HorizontalAlignment="Left" Height="81" VerticalAlignment="Top" Width="330">
+                <Label Content="Max copy time" HorizontalAlignment="Left" Margin="16,41,0,0" VerticalAlignment="Top"/>
+                <Label Content="Max search time" HorizontalAlignment="Left" Margin="7,10,0,0" VerticalAlignment="Top"/>
+                <TextBlock Margin="0,15,10,9" TextWrapping="Wrap" Text="Note: zero seconds is equivalent to no maximum time" HorizontalAlignment="Right" Width="108"/>
+            </Grid>
+        </GroupBox>
+        <Button x:Name="btnCancel" Content="Cancel" Margin="0,0,12,12" HorizontalAlignment="Right" Width="75" Height="22" VerticalAlignment="Bottom" Click="btnCancel_Click"/>
+        <Button x:Name="btnApply" Content="Apply" Margin="0,0,12,39" HorizontalAlignment="Right" Width="75" Height="22" VerticalAlignment="Bottom" Click="btnApply_Click"/>
+    </Grid>
+</Window>
