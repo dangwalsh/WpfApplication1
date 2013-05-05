@@ -39,6 +39,7 @@ namespace FamilyCollector.Controller
             _delegate = window;
             
         }
+
         #endregion
 
         #region IFileManage interface methods
@@ -99,27 +100,45 @@ namespace FamilyCollector.Controller
         #endregion
 
         #region Main program loop
-        public void IterateProjects(System.IO.DirectoryInfo root)
+        public void IterateProjects(System.IO.DirectoryInfo root, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
+            int i = 0;
+            int max = 0;
             System.IO.DirectoryInfo[] subDirs = null;
             try
             {
                 subDirs = root.GetDirectories();
-                this.Delegate.Progress.Maximum = subDirs.Count();
+                max = subDirs.Count() / 100;
+                //this.Delegate.Progress.Maximum = subDirs.Count();
             }
             catch (Exception e)
             {
                 Model.Results.LogError(e.Message);
             }
+            
             // this will iterate through each job folder
             foreach (System.IO.DirectoryInfo dirInfo in subDirs)
             {
+                ++i;
+                if ((i % max == 0) && (null != backgroundWorker))
+                {
+                    if (backgroundWorker.CancellationPending)
+                    {
+                        // Return without doing any more work.
+                        return;
+                    }
+                    if (backgroundWorker.WorkerReportsProgress)
+                    {
+                        backgroundWorker.ReportProgress(i / max);
+                    }
+                }
                 //Application.DoEvents();
-                this.Delegate.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
-                        new View.MainWindow.NextFileDelegate(this.Delegate.timerSrch_Tick));
-                if (View.MainWindow.ExitFlag) return;
+                //this.Delegate.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+                //        new View.MainWindow.NextFileDelegate(this.Delegate.timerSrch_Tick));
+                //if (View.MainWindow.ExitFlag) return;
                 //this.Delegate.Progress.PerformStep();
-                this.Delegate.CurPath.Content = dirInfo.FullName;
+                //this.Delegate.CurPath.Content = dirInfo.FullName;
+                Model.Settings.SourcePath = dirInfo.FullName;
                 string familyPath = dirInfo.FullName + @"\3_Process Families"; // TODO: set this name through the form
                 System.IO.DirectoryInfo familyDir = new System.IO.DirectoryInfo(familyPath);
 
@@ -134,6 +153,11 @@ namespace FamilyCollector.Controller
                         Model.Results.LogError(e.Message);
                     }
                 }
+                
+            }
+            if (backgroundWorker != null && backgroundWorker.WorkerReportsProgress)
+            {
+                backgroundWorker.ReportProgress(100);
             }
         }
         #endregion

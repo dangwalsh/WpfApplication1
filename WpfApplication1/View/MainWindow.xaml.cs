@@ -28,19 +28,16 @@ namespace FamilyCollector.View
     public partial class MainWindow : Window
     {
         DispatcherTimer _timerSrch;
-        static bool _exitFlag;
+        //static bool _exitFlag;
         SearchManager _manager;
         ProgressBar _progress;
         Label _curPath;
         TimeSpan _seconds;
         string _time = "00:00:00";
-        BackgroundWorker _backgroundWorker;
+        BackgroundWorker backgroundWorker;
 
         #region Public properties
-        public static bool ExitFlag
-        {
-            get { return _exitFlag; }
-        }
+
         public ProgressBar Progress // needed for updates via SearchManager
         {
             get { return _progress; }
@@ -70,58 +67,58 @@ namespace FamilyCollector.View
             this.btnReset.Visibility = Visibility.Hidden;
             this.progCur.Visibility = Visibility.Hidden;
             this.progCur.Minimum = 1;
-            //this.progCur.Step = 1;
+            this.progCur.Maximum = 100;
             this.lblTgt.Content = Settings.TargetPath;
             this.lblTime.Content = _time;
-            this.gridErrors.ItemsSource = Results.Errors;
-            this.gridMoved.ItemsSource = Results.MovedFiles;
+
             this._timerSrch.Interval = new TimeSpan(0, 0, 1);
             //this._timerSrch.Tick += new EventHandler(counterOne_Tick);
             //this._timerSrch.Tick += timerSrch_Tick;
-            _backgroundWorker = ((BackgroundWorker)this.FindResource("backgroundWorker"));
+            backgroundWorker = ((BackgroundWorker)this.FindResource("backgroundWorker"));
         }
 
-        //private void counterOne_Tick(object sender, EventArgs e)
-        //{
-        //    // code goes here
-        //    /*
-        //    if (counterOneTime > 0)
-        //    {
-        //        counterOneTime--;
-        //        labelCounterOne.Content = counterOneTime + "s";
-        //    }
-        //    else
-        //        counterOne.Stop();
-        //     * */
-        //    _seconds += this._timerSrch.Interval;
-        //    _time = string.Format("{0:D2}:{1:D2}:{2:D2}",
-        //                                (_seconds.Hours),
-        //                                (_seconds.Minutes),
-        //                                (_seconds.Seconds));
-        //    this.lblTime.Content = _time;
-        //}
-        
+        private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            System.IO.DirectoryInfo root = (System.IO.DirectoryInfo)e.Argument;
+            _manager.IterateProjects(root, backgroundWorker);
+            
+            if (backgroundWorker.CancellationPending)
+            {
+                e.Cancel = true;
+                return;
+            }           
+        }
+
+        private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            this.btnCancel.Visibility = Visibility.Hidden;
+            this.progCur.Visibility = Visibility.Hidden;
+            this.btnSearch.Visibility = Visibility.Visible;
+            this.btnReset.Visibility = Visibility.Visible;
+            Dispatcher.BeginInvoke(DispatcherPriority.Normal, (Action)delegate()
+                {
+                    this.gridMoved.ItemsSource = Results.MovedFiles;
+                    this.gridMoved.ItemsSource = Results.MovedFiles;
+                });
+        }
+
+        private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progCur.Value = e.ProgressPercentage;
+            Dispatcher.BeginInvoke(new Action(() => { this.lblCur.Content = Settings.SourcePath; }));
+
+        }
+       
         public void timerSrch_Tick()
         {
             _seconds += _timerSrch.Interval;
-            //_time = string.Format("{0:D2}:{1:D2}:{2:D2}",
-            //                            (_seconds.Hours),
-            //                            (_seconds.Minutes),
-            //                            (_seconds.Seconds));
-            this.lblTime.Content = _seconds.Hours;
+            _time = string.Format("{0:D2}:{1:D2}:{2:D2}",
+                                        (_seconds.Hours),
+                                        (_seconds.Minutes),
+                                        (_seconds.Seconds));
+            this.lblTime.Content = _time;
             this._timerSrch.Dispatcher.BeginInvoke(DispatcherPriority.SystemIdle, 
                 new NextFileDelegate(this.timerSrch_Tick));
-        }
-        private void UpdateTextWrong()
-        {
-            // Simulate some work taking place with a five-second delay.
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-            this.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
-                (ThreadStart)delegate()
-                    {
-                        this.lblTime.Content = "Here is some new text.";
-                    }
-                );
         }
 
         private void btnSearch_Click(object sender, RoutedEventArgs e)
@@ -136,36 +133,11 @@ namespace FamilyCollector.View
                 if (root.Exists)
                 {
                     this.progCur.Value = 1;
+                    this.btnSearch.Visibility = Visibility.Hidden;
                     this.progCur.Visibility = Visibility.Visible;
                     this.btnCancel.Visibility = Visibility.Visible;
-                    //this._timerSrch.Start();
-                    //Thread thread = new Thread(UpdateTextWrong);
-                    //thread.Start();
-                    //ThreadStart start = delegate()
-                    //{
-                    //    Dispatcher.BeginInvoke(DispatcherPriority.Render, new NextFileDelegate(timerSrch_Tick));//Action<string>(UpdateTextWrong), "From other Thread");
-                    //};
-                    //new Thread(start).Start();
-                    //this._timerSrch.Dispatcher.BeginInvoke(DispatcherPriority.Render, 
-                    //    new NextFileDelegate(timerSrch_Tick));
-                    _manager.IterateProjects(root);
-                    //this._timerSrch.Dispatcher.BeginInvokeShutdown(DispatcherPriority.Normal);
-                    //this._timerSrch.Stop();
-                    if (!_exitFlag)
-                    {
-                        string prompt = "Migration completed succesfully!\nTime: " + _time;
-                        int n = Results.Errors.Count;
-                        if (n > 0)
-                            prompt += "\nErrors: " + n;
-                        MessageBox.Show(prompt, "Success!");
-                    }
-                    else
-                    {
-                        _exitFlag = false;
-                    }
-                    this.btnCancel.Visibility = Visibility.Hidden;
-                    this.progCur.Visibility = Visibility.Hidden;
-                    this.btnReset.Visibility = Visibility.Visible;
+
+                    backgroundWorker.RunWorkerAsync(root);                    
                 }
                 else
                 {
@@ -177,8 +149,8 @@ namespace FamilyCollector.View
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
-        {
-            _exitFlag = true;
+        {            
+            backgroundWorker.CancelAsync();
         }
 
         private void btnReset_Click(object sender, RoutedEventArgs e)
@@ -187,6 +159,8 @@ namespace FamilyCollector.View
             _time = "00:00:00";
             this.lblTime.Content = _time;
             this.btnReset.Visibility = Visibility.Hidden;
+            this.progCur.Visibility = Visibility.Hidden;
+            this.lblCur.Content = Settings.RootPath;
             Results.MovedFiles.Clear();
             Results.SkippedFiles.Clear();
             Results.Errors.Clear();

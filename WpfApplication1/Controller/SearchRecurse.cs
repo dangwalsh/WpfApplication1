@@ -26,7 +26,7 @@ namespace FamilyCollector.Controller
         public override void WalkDirectoryTree(System.IO.DirectoryInfo root)
         {
             //Application.DoEvents();
-            if (View.MainWindow.ExitFlag) return;
+            //if (View.MainWindow.ExitFlag) return;
             System.IO.FileInfo[] files = null;
             System.IO.DirectoryInfo[] subDirs = null;
 
@@ -49,7 +49,7 @@ namespace FamilyCollector.Controller
                 foreach (System.IO.FileInfo fi in files)
                 {
                     //Application.DoEvents();
-                    if (View.MainWindow.ExitFlag) return;
+                    //if (View.MainWindow.ExitFlag) return;
                     if(fi.Extension == ".rfa")
                         this.Delegate.MoveFile(fi);
                 }
@@ -60,7 +60,7 @@ namespace FamilyCollector.Controller
                 foreach (System.IO.DirectoryInfo dirInfo in subDirs)
                 {
                     //Application.DoEvents();
-                    if (View.MainWindow.ExitFlag) return;
+                    //if (View.MainWindow.ExitFlag) return;
                     // recursive call to self
                     WalkDirectoryTree(dirInfo);
                 }
